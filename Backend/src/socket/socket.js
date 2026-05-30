@@ -36,7 +36,9 @@ export const initSocket = (httpServer) => {
 
   ioInstance.on("connection", (socket) => {
     const companyRoom = `company-${socket.user.companyId}`;
+    const userRoom = `user-${socket.user.userId}`;
     socket.join(companyRoom);
+    socket.join(userRoom);
 
     socket.on("join:incident", (incidentId) => {
       socket.join(`incident-${incidentId}`);

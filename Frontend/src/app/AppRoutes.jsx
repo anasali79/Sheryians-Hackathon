@@ -16,6 +16,7 @@ import IncidentDashboard from "../features/Incidents/pages/IncidentDashboard";
 import IncidentDetails from "../features/Incidents/pages/IncidentDetails";
 import IncidentStatusPage from "../features/Incidents/pages/IncidentStatusPage";
 import TeamManagement from "../features/Incidents/pages/TeamManagement";
+import CompanyPage from "../features/Incidents/pages/CompanyPage";
 
 import DocsLayout from "../layouts/DocsLayout";
 
@@ -92,6 +93,7 @@ const AppRoutes = () => {
             <Route path="incidents/:id" element={<IncidentDetails />} />
             <Route path="status" element={<IncidentStatusPage />} />
             <Route path="team" element={<TeamManagement />} />
+            <Route path="company" element={<CompanyPage />} />
           </Route>
 
           <Route path="/dashboard" element={<IncidentLayout />}>

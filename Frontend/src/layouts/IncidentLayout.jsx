@@ -6,9 +6,8 @@ import {
   FiGrid,
   FiAlertCircle,
   FiActivity,
-  FiSearch,
-  FiBell,
   FiUsers,
+  FiBriefcase,
 } from "react-icons/fi";
 import { SiOpslevel } from "react-icons/si";
 import { Toaster } from "react-hot-toast";
@@ -16,6 +15,8 @@ import { useWorkspacePaths } from "../features/Incidents/hooks/useWorkspacePaths
 import { canManageWorkspace } from "../lib/workspacePaths";
 import { useAuth } from "../features/Authentication/hook/useAuth";
 import PageBackButton from "../shared/components/PageBackButton";
+import WorkspaceSearch from "../features/Incidents/components/WorkspaceSearch";
+import WorkspaceNotifications from "../features/Incidents/components/WorkspaceNotifications";
 
 const IncidentLayout = () => {
   const location = useLocation();
@@ -25,7 +26,6 @@ const IncidentLayout = () => {
   const { logoutHandler } = useAuth();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isTopProfileOpen, setIsTopProfileOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
   const profileMenuRef = useRef(null);
   const topProfileRef = useRef(null);
   const paths = useWorkspacePaths();
@@ -58,13 +58,6 @@ const IncidentLayout = () => {
     navigate("/login", { replace: true });
   };
 
-  const handleSearchSubmit = (event) => {
-    if (event.key !== "Enter") return;
-    const query = searchText.trim();
-    if (!query) return;
-    navigate(`${paths.incidents}?q=${encodeURIComponent(query)}`);
-  };
-
   const hideTopNav =
     location.pathname === "/admin/status" ||
     location.pathname === "/admin/team" ||
@@ -77,7 +70,10 @@ const IncidentLayout = () => {
     { name: "Status Page", path: paths.status, icon: FiActivity },
   ];
 
-  const adminNav = [{ name: "Team", path: paths.team, icon: FiUsers }];
+  const adminNav = [
+    { name: "Company", path: paths.company, icon: FiBriefcase },
+    { name: "Team", path: paths.team, icon: FiUsers },
+  ];
 
   const companyLabel =
     user?.companyId?.name || user?.company?.name || "Workspace";
@@ -241,33 +237,8 @@ const IncidentLayout = () => {
               <PageBackButton fallbackPath={paths.dashboard} />
 
               <div className="flex items-center gap-4">
-                <div className="relative">
-                  <FiSearch
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-                    size={14}
-                  />
-                  <input
-                    type="text"
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    onKeyDown={handleSearchSubmit}
-                    placeholder="Search incidents and press Enter..."
-                    className="bg-input border border-border rounded-full py-2 pl-9 pr-4 text-[11px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors w-55"
-                  />
-                </div>
-                {isPrivileged && (
-                  <Link
-                    to={paths.incidents}
-                    className="bg-primary hover:bg-primary/80 text-primary-foreground px-4 py-2 rounded-full text-[10px] font-bold transition-colors uppercase ml-2">
-                    Create Incident
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  className="text-text-muted hover:text-text transition-colors relative ml-3">
-                  <FiBell size={18} />
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-error rounded-full border-2 border-bg" />
-                </button>
+                <WorkspaceSearch />
+                <WorkspaceNotifications />
                 <div ref={topProfileRef} className="relative ml-3">
                   <button
                     type="button"
@@ -290,7 +261,7 @@ const IncidentLayout = () => {
             </header>
           )}
 
-          <main className="flex-1 min-h-0 overflow-y-auto relative">
+          <main className="flex flex-1 min-h-0 flex-col overflow-y-auto relative">
             <Outlet />
           </main>
         </div>

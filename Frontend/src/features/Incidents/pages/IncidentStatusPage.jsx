@@ -1,10 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import Button from "../../../shared/components/Button";
-import DeclareIncidentModal from "../components/DeclareIncidentModal";
 import Loader from "../../../shared/components/Loader";
-import { FiLink2 } from "react-icons/fi";
-import { canManageWorkspace } from "../../../lib/workspacePaths";
 import { api } from "../../../api/httpClient";
 
 const formatStatusLabel = (status = "") => {
@@ -27,8 +23,6 @@ const formatRelative = (iso) => {
 
 const IncidentStatusPage = () => {
   const user = useSelector((state) => state.auth.user);
-  const isPrivileged = canManageWorkspace(user?.role);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [incidents, setIncidents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -116,25 +110,8 @@ const IncidentStatusPage = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-bg overflow-y-auto">
-      <div className="h-20 border-b border-border flex items-center justify-between px-8 shrink-0 bg-bg">
+      <div className="h-20 border-b border-border flex items-center px-8 shrink-0 bg-bg">
         <h1 className="text-xl font-bold text-text">Status Page</h1>
-        {isPrivileged && (
-          <div className="flex items-center gap-4">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="font-bold flex items-center gap-2">
-              <FiLink2 /> Invite Link Demo
-            </Button>
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              variant="primary"
-              size="sm"
-              className="font-bold">
-              + Create Incident
-            </Button>
-          </div>
-        )}
       </div>
 
       <div className="flex-1 flex flex-col items-center py-12 px-4">
@@ -218,14 +195,6 @@ const IncidentStatusPage = () => {
           </div>
         </div>
       </div>
-
-      {isPrivileged && (
-        <DeclareIncidentModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onIncidentCreated={fetchIncidents}
-        />
-      )}
     </div>
   );
 };

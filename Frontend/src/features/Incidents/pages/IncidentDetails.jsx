@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { GoStopwatch } from "react-icons/go";
+import { IoCloseCircle } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import Loader from "../../../shared/components/Loader";
@@ -10,6 +11,8 @@ import { api } from "../../../api/httpClient";
 import { useWorkspacePaths } from "../hooks/useWorkspacePaths";
 import { canManageWorkspace } from "../../../lib/workspacePaths";
 import { getSocketBaseUrl } from "../../../lib/socketBaseUrl";
+import { getTeamTagLabel } from "../../../lib/teamTags";
+import AssignMemberPicker from "../components/AssignMemberPicker";
 
 const formatStatusLabel = (status = "") => {
   if (status === "OPEN") return "Open";
@@ -77,6 +80,7 @@ const IncidentDetails = () => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isGeneratingPostmortem, setIsGeneratingPostmortem] = useState(false);
   const [isAssigningResponder, setIsAssigningResponder] = useState(false);
+  const [removingResponderId, setRemovingResponderId] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [nowTs, setNowTs] = useState(Date.now());
 
@@ -166,19 +170,18 @@ const IncidentDetails = () => {
     };
   }, [id, appendTimelineFromSocket]);
 
+  const assignedResponderIds = useMemo(() => {
+    if (!incident) return [];
+    return (incident.assignedUsers || []).map((entry) =>
+      typeof entry === "object" && entry?._id != null
+        ? String(entry._id)
+        : String(entry),
+    );
+  }, [incident]);
+
   const responderList = useMemo(() => {
     if (!incident) return [];
-    const map = new Map();
-    const users = [
-      ...(incident.assignedUsers || []),
-      incident.createdBy,
-    ].filter(Boolean);
-    users.forEach((u) => {
-      if (u?._id && !map.has(u._id)) {
-        map.set(u._id, u);
-      }
-    });
-    return Array.from(map.values());
+    return (incident.assignedUsers || []).filter((u) => u?._id);
   }, [incident]);
 
   const handleStatusUpdate = async (status) => {
@@ -257,6 +260,42 @@ const IncidentDetails = () => {
       toast.error(error?.message || "Failed to assign responder");
     } finally {
       setIsAssigningResponder(false);
+    }
+  };
+
+  const handleRemoveResponder = async (responderId) => {
+    if (!responderId || !incident) return;
+
+    const currentUserId = String(user?._id ?? user?.id ?? "");
+    if (responderId === currentUserId) {
+      toast.error("You cannot remove yourself from the incident");
+      return;
+    }
+
+    const existingUserIds = (incident.assignedUsers || [])
+      .map((member) => member?._id)
+      .filter(Boolean);
+
+    const updatedUserIds = existingUserIds.filter(
+      (uid) => String(uid) !== String(responderId)
+    );
+
+    if (updatedUserIds.length === existingUserIds.length) {
+      toast.error("Responder not found in this incident");
+      return;
+    }
+
+    try {
+      setRemovingResponderId(responderId);
+      await api.post(`/incidents/${id}/assign`, {
+        userIds: updatedUserIds,
+      });
+      await fetchIncidentDetails();
+      toast.success("Responder removed from incident");
+    } catch (error) {
+      toast.error(error?.message || "Failed to remove responder");
+    } finally {
+      setRemovingResponderId(null);
     }
   };
 
@@ -466,21 +505,47 @@ const IncidentDetails = () => {
               Active Responders
             </h3>
             <div className="flex flex-col gap-2 mb-4">
-              {responderList.map((user) => (
+              {responderList.map((responder) => (
                 <div
-                  key={user._id}
-                  className="bg-bg-surface border border-border rounded-lg p-3 flex items-center gap-3 shadow-sm">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-md">
-                    {(user?.name || "U").charAt(0).toUpperCase()}
+                  key={responder._id}
+                  className="bg-bg-surface border border-border rounded-lg p-3 flex items-center gap-3 shadow-sm group">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-md shrink-0">
+                    {(responder?.name || "U").charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <div className="text-md font-bold text-text">
-                      {user?.name || "Unknown"}
-                    </div>
-                    <div className="text-sm font-semibold text-text-muted">
-                      {user?.email}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-md font-bold text-text truncate">
+                      {responder?.name || "Unknown"}
+                    </p>
+                    <p className="text-sm font-medium text-text-muted truncate">
+                      {responder?.email}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {responder?.role && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-primary/15 text-primary border border-primary/20">
+                          {responder.role}
+                        </span>
+                      )}
+                      {responder?.teamTag && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-bg-muted text-text-muted border border-border">
+                          {getTeamTagLabel(responder.teamTag)}
+                        </span>
+                      )}
                     </div>
                   </div>
+                  {isPrivileged && String(responder._id) !== String(user?._id ?? user?.id ?? "") && (
+                    <button
+                      onClick={() => handleRemoveResponder(responder._id)}
+                      disabled={removingResponderId === responder._id}
+                      title={`Remove ${responder?.name || "responder"}`}
+                      className="shrink-0 text-error/60 hover:text-error transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {removingResponderId === responder._id ? (
+                        <span className="w-6 h-6 block border-2 border-error/40 border-t-error rounded-full animate-spin" />
+                      ) : (
+                        <IoCloseCircle size={22} />
+                      )}
+                    </button>
+                  )}
                 </div>
               ))}
               {responderList.length === 0 && (
@@ -490,27 +555,20 @@ const IncidentDetails = () => {
               )}
             </div>
             {isPrivileged && (
-              <div className="flex gap-2">
-                <select
+              <div className="flex gap-2 items-stretch">
+                <AssignMemberPicker
+                  members={companyMembers}
+                  assignedIds={assignedResponderIds}
                   value={selectedResponderId}
-                  onChange={(e) => setSelectedResponderId(e.target.value)}
+                  onChange={setSelectedResponderId}
                   disabled={isAssigningResponder}
-                  className="w-full bg-input border border-border rounded-lg px-4 py-4 text-md text-text focus:outline-none focus:border-primary transition-colors shadow-sm">
-                  <option value="">
-                    Assign responder from company members...
-                  </option>
-                  {companyMembers.map((member) => (
-                    <option key={member._id} value={member._id}>
-                      {member.name} ({member.role}) - {member.email}
-                    </option>
-                  ))}
-                </select>
+                />
                 <Button
                   size="sm"
                   isLoading={isAssigningResponder}
                   onClick={handleAssignResponder}
                   disabled={!selectedResponderId}
-                  className="px-4 whitespace-nowrap">
+                  className="px-4 whitespace-nowrap self-end">
                   Assign
                 </Button>
               </div>

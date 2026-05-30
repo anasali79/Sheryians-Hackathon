@@ -1,31 +1,49 @@
-import { FiAlertTriangle } from "react-icons/fi";
+import { useLocation } from "react-router";
 import { SiOpslevel } from "react-icons/si";
+import { getLoaderPageLabel } from "../../lib/loaderLabels";
 
-const Loader = () => {
+const Loader = ({ label, description, compact = false }) => {
+  const { pathname } = useLocation();
+  const displayLabel = label ?? getLoaderPageLabel(pathname);
+
+  if (compact) {
+    return (
+      <div
+        className="inline-flex items-center gap-2.5 text-text-muted"
+        role="status"
+        aria-live="polite"
+        aria-label={displayLabel}>
+        <span className="relative flex h-6 w-6 items-center justify-center">
+          <span className="absolute inset-0 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+          <SiOpslevel className="relative text-[10px] text-primary" aria-hidden />
+        </span>
+        <span className="text-xs font-semibold">{displayLabel}</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg p-6">
-      <div className="w-full max-w-sm rounded-3xl border border-border bg-bg-surface/95 p-8 shadow-2xl shadow-primary/10 text-center">
-        <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-spin" />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-bg shadow-inner">
-            <SiOpslevel className="text-3xl text-primary" />
-          </div>
-        </div>
+    <div
+      className="flex min-h-full w-full flex-1 items-center justify-center px-4"
+      role="status"
+      aria-live="polite"
+      aria-label={displayLabel}>
+      <div className="flex flex-col items-center justify-center gap-3 text-center">
+        <span className="relative flex h-11 w-11 items-center justify-center">
+          <span className="absolute inset-0 rounded-full border-2 border-primary/15" />
+          <span className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+          <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-bg-surface border border-border">
+            <SiOpslevel className="text-base text-primary" aria-hidden />
+          </span>
+        </span>
 
-        <div className="inline-flex items-center gap-2 rounded-full bg-error/10 px-4 py-2 text-error text-sm font-semibold uppercase tracking-[0.2em]">
-          <FiAlertTriangle className="text-base animate-pulse" />
-          Recovering
-        </div>
-
-        <h2 className="mt-5 text-2xl font-bold text-text">Solving the error</h2>
-        <p className="mt-3 text-sm text-text-muted leading-6">
-          Hang tight while we reroute the incident and restore normal operation.
-        </p>
-
-        <div className="mt-8 flex items-center justify-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
-          <span className="h-2.5 w-2.5 rounded-full bg-primary/70 animate-pulse delay-150" />
-          <span className="h-2.5 w-2.5 rounded-full bg-primary/40 animate-pulse delay-300" />
+        <div>
+          <p className="text-sm font-bold text-text">{displayLabel}</p>
+          {description && (
+            <p className="mt-1 text-xs text-text-muted max-w-[220px]">
+              {description}
+            </p>
+          )}
         </div>
       </div>
     </div>
