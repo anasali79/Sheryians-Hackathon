@@ -11,6 +11,7 @@ import timelineRoutes from "./routes/timeline.routes.js";
 import postmortemRoutes from "./routes/postmortem.routes.js";
 import statusRoutes from "./routes/status.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 import { notFound, errorHandler } from "./middleware/error.middleware.js";
 
@@ -67,6 +68,7 @@ app.use("/api/timeline", timelineRoutes);
 app.use("/api/incidents", postmortemRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -23,5 +23,6 @@ export function useWorkspacePaths() {
     incidentDetail: (id) => join(`incidents/${id}`),
     team: join("team"),
     status: join("status"),
+    company: join("company"),
   };
 }

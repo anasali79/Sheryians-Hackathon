@@ -116,21 +116,13 @@ const IncidentAdmin = () => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-text">Active Incidents</h1>
         {isPrivileged && (
-          <div className="flex items-center gap-5">
-            <Button
-              variant="secondary"
-              size="md"
-              className="font-bold flex items-center justify-center gap-2">
-              Invite Link Demo
-            </Button>
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              variant="primary"
-              size="md"
-              className="font-bold">
-              + Create Incident
-            </Button>
-          </div>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            variant="primary"
+            size="md"
+            className="font-bold">
+            + Create Incident
+          </Button>
         )}
       </div>
 
